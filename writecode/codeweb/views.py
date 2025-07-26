@@ -1,11 +1,13 @@
 import openai
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from .forms import SignUpForm
 from .models import Code
+from .forms import UsernameChangeForm
 
 
 def home(request):
@@ -189,3 +191,30 @@ def delete_history(request, History_id):
     history.delete()
     messages.success(request, "Deleted successfully..")
     return redirect('history')
+
+
+@login_required
+def account_settings(request):
+    if request.method == 'POST':
+        u_form = UsernameChangeForm(request.POST, instance=request.user)
+        p_form = PasswordChangeForm(user=request.user, data=request.POST)
+
+        if u_form.is_valid() and p_form.is_valid():
+            # 1) update username
+            u_form.save()
+            # 2) update password and keep the user logged in
+            user = p_form.save()
+            update_session_auth_hash(request, user)
+
+            messages.success(request, "Your account has been updated successfully.")
+            return redirect('account_settings')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        u_form = UsernameChangeForm(instance=request.user)
+        p_form = PasswordChangeForm(user=request.user)
+
+    return render(request, 'account_settings.html', {
+        'u_form': u_form,
+        'p_form': p_form,
+    })

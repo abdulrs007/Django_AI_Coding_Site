@@ -1,0 +1,796 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Professional Header -->
+<div class="bg-white border-bottom shadow-sm mb-5">
+  <div class="container py-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="h2 mb-2 text-dark fw-bold">
+          <i class="fas fa-user-cog text-primary me-2"></i>Account Settings
+        </h1>
+        <p class="text-muted mb-0 fs-5">Manage your profile information and security preferences</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+
+      <!-- Success/Error Messages -->
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="alert alert-{{ msg.tags }} alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+              {% if msg.tags == 'success' %}
+                <i class="fas fa-check-circle me-2"></i>
+              {% elif msg.tags == 'error' %}
+                <i class="fas fa-exclamation-circle me-2"></i>
+              {% elif msg.tags == 'warning' %}
+                <i class="fas fa-exclamation-triangle me-2"></i>
+              {% else %}
+                <i class="fas fa-info-circle me-2"></i>
+              {% endif %}
+              <span>{{ msg }}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Settings Navigation Tabs -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-0">
+          <ul class="nav nav-pills nav-fill settings-nav" id="settingsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="profile-tab" data-bs-toggle="pill" data-bs-target="#profile" type="button" role="tab">
+                <i class="fas fa-user me-2"></i>Profile Information
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="security-tab" data-bs-toggle="pill" data-bs-target="#security" type="button" role="tab">
+                <i class="fas fa-shield-alt me-2"></i>Security & Password
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="preferences-tab" data-bs-toggle="pill" data-bs-target="#preferences" type="button" role="tab">
+                <i class="fas fa-cog me-2"></i>Preferences
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="settingsTabContent">
+
+        <!-- Profile Information Tab -->
+        <div class="tab-pane fade show active" id="profile" role="tabpanel">
+          <div class="row g-4">
+
+            <!-- Profile Picture Section -->
+            <div class="col-lg-4">
+              <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                  <div class="profile-avatar-container mb-3">
+                    <div class="profile-avatar mx-auto">
+                      <i class="fas fa-user"></i>
+                    </div>
+                    <button class="btn btn-sm btn-primary profile-avatar-btn">
+                      <i class="fas fa-camera"></i>
+                    </button>
+                  </div>
+                  <h5 class="fw-bold text-dark">{{ user.get_full_name|default:user.username }}</h5>
+                  <p class="text-muted small mb-3">{{ user.email|default:"No email provided" }}</p>
+                  <span class="badge bg-success-subtle text-success rounded-pill">
+                    <i class="fas fa-check-circle me-1"></i>Active Account
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Update Username Form -->
+            <div class="col-lg-8">
+              <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                  <div class="d-flex align-items-center">
+                    <div class="settings-icon-wrapper bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                      <i class="fas fa-user text-primary"></i>
+                    </div>
+                    <div>
+                      <h5 class="card-title mb-1 fw-bold">Update Username</h5>
+                      <p class="text-muted small mb-0">Change your display username</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <form method="POST" id="usernameForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="username">
+
+                    <div class="mb-3">
+                      <label for="{{ u_form.username.id_for_label }}" class="form-label fw-semibold">
+                        Current Username
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="fas fa-at text-muted"></i>
+                        </span>
+                        <input
+                          type="text"
+                          class="form-control border-start-0 py-3"
+                          id="{{ u_form.username.id_for_label }}"
+                          name="{{ u_form.username.name }}"
+                          value="{{ u_form.username.value|default:user.username }}"
+                          placeholder="Enter new username">
+                      </div>
+                      <div class="form-text text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Username must be unique and contain only letters, numbers, and @/./+/-/_
+                      </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                      <button type="submit" class="btn btn-primary px-4" id="saveUsernameBtn">
+                        <span id="usernameText">
+                          <i class="fas fa-save me-2"></i>Save Changes
+                        </span>
+                        <span id="usernameSpinner" class="d-none">
+                          <span class="spinner-border spinner-border-sm me-2"></span>
+                          Saving...
+                        </span>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary" onclick="resetForm('usernameForm')">
+                        <i class="fas fa-undo me-2"></i>Reset
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security & Password Tab -->
+        <div class="tab-pane fade" id="security" role="tabpanel">
+          <div class="row g-4">
+
+            <!-- Security Overview -->
+            <div class="col-lg-4">
+              <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                  <h5 class="fw-bold mb-3">Security Status</h5>
+
+                  <div class="security-item d-flex align-items-center mb-3">
+                    <div class="security-icon bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                      <i class="fas fa-shield-check text-success"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1 fw-semibold">Password Protected</h6>
+                      <small class="text-muted">Strong password set</small>
+                    </div>
+                  </div>
+
+                  <div class="security-item d-flex align-items-center mb-3">
+                    <div class="security-icon bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                      <i class="fas fa-clock text-warning"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1 fw-semibold">Last Login</h6>
+                      <small class="text-muted">{{ user.last_login|date:"M d, Y H:i" }}</small>
+                    </div>
+                  </div>
+
+                  <div class="security-item d-flex align-items-center">
+                    <div class="security-icon bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                      <i class="fas fa-calendar text-info"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1 fw-semibold">Account Created</h6>
+                      <small class="text-muted">{{ user.date_joined|date:"M d, Y" }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Change Password Form -->
+            <div class="col-lg-8">
+              <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                  <div class="d-flex align-items-center">
+                    <div class="settings-icon-wrapper bg-danger bg-opacity-10 rounded-circle p-2 me-3">
+                      <i class="fas fa-key text-danger"></i>
+                    </div>
+                    <div>
+                      <h5 class="card-title mb-1 fw-bold">Change Password</h5>
+                      <p class="text-muted small mb-0">Update your account password for security</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <form method="POST" id="passwordForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="password">
+
+                    <!-- Current Password -->
+                    <div class="mb-3">
+                      <label for="{{ p_form.old_password.id_for_label }}" class="form-label fw-semibold">
+                        Current Password
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="fas fa-lock text-muted"></i>
+                        </span>
+                        <input
+                          type="password"
+                          class="form-control border-start-0 py-3"
+                          id="{{ p_form.old_password.id_for_label }}"
+                          name="{{ p_form.old_password.name }}"
+                          placeholder="Enter current password"
+                          required>
+                        <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('{{ p_form.old_password.id_for_label }}', this)">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- New Password -->
+                    <div class="mb-3">
+                      <label for="{{ p_form.new_password1.id_for_label }}" class="form-label fw-semibold">
+                        New Password
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="fas fa-key text-muted"></i>
+                        </span>
+                        <input
+                          type="password"
+                          class="form-control border-start-0 py-3"
+                          id="{{ p_form.new_password1.id_for_label }}"
+                          name="{{ p_form.new_password1.name }}"
+                          placeholder="Enter new password"
+                          required>
+                        <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('{{ p_form.new_password1.id_for_label }}', this)">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                      </div>
+
+                      <!-- Password Strength Indicator -->
+                      <div class="password-strength-container mt-2" style="display: none;">
+                        <div class="password-strength-bar mb-2">
+                          <div class="password-strength-fill" id="newPasswordStrengthFill"></div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between">
+                          <small class="password-strength-text" id="newPasswordStrengthText"></small>
+                          <small class="password-strength-requirements" id="newPasswordStrengthRequirements"></small>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Confirm New Password -->
+                    <div class="mb-4">
+                      <label for="{{ p_form.new_password2.id_for_label }}" class="form-label fw-semibold">
+                        Confirm New Password
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="fas fa-check text-muted"></i>
+                        </span>
+                        <input
+                          type="password"
+                          class="form-control border-start-0 py-3"
+                          id="{{ p_form.new_password2.id_for_label }}"
+                          name="{{ p_form.new_password2.name }}"
+                          placeholder="Confirm new password"
+                          required>
+                        <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('{{ p_form.new_password2.id_for_label }}', this)">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                      </div>
+                      <!-- Password Match Indicator -->
+                      <div class="password-match-container mt-2" style="display: none;">
+                        <small class="password-match-text" id="newPasswordMatchText"></small>
+                      </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                      <button type="submit" class="btn btn-danger px-4" id="changePasswordBtn">
+                        <span id="passwordText">
+                          <i class="fas fa-key me-2"></i>Change Password
+                        </span>
+                        <span id="passwordSpinner" class="d-none">
+                          <span class="spinner-border spinner-border-sm me-2"></span>
+                          Updating...
+                        </span>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary" onclick="resetForm('passwordForm')">
+                        <i class="fas fa-undo me-2"></i>Reset
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preferences Tab -->
+        <div class="tab-pane fade" id="preferences" role="tabpanel">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom-0 py-3">
+              <div class="d-flex align-items-center">
+                <div class="settings-icon-wrapper bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                  <i class="fas fa-cog text-info"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-1 fw-bold">Account Preferences</h5>
+                  <p class="text-muted small mb-0">Customize your account experience</p>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row g-4">
+
+                <!-- Notification Settings -->
+                <div class="col-md-6">
+                  <h6 class="fw-bold mb-3">Notifications</h6>
+
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                    <label class="form-check-label" for="emailNotifications">
+                      <strong>Email Notifications</strong>
+                      <br><small class="text-muted">Receive updates via email</small>
+                    </label>
+                  </div>
+
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="securityAlerts" checked>
+                    <label class="form-check-label" for="securityAlerts">
+                      <strong>Security Alerts</strong>
+                      <br><small class="text-muted">Get notified of security events</small>
+                    </label>
+                  </div>
+
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="marketingEmails">
+                    <label class="form-check-label" for="marketingEmails">
+                      <strong>Marketing Emails</strong>
+                      <br><small class="text-muted">Receive product updates and news</small>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Display Settings -->
+                <div class="col-md-6">
+                  <h6 class="fw-bold mb-3">Display</h6>
+
+                  <div class="mb-3">
+                    <label for="themeSelect" class="form-label fw-semibold">Theme</label>
+                    <select class="form-select" id="themeSelect">
+                      <option value="light">Light Mode</option>
+                      <option value="dark">Dark Mode</option>
+                      <option value="auto">Auto (System)</option>
+                    </select>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="languageSelect" class="form-label fw-semibold">Language</label>
+                    <select class="form-select" id="languageSelect">
+                      <option value="en">English</option>
+                      <option value="es">Spanish</option>
+                      <option value="fr">French</option>
+                      <option value="de">German</option>
+                    </select>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="timezoneSelect" class="form-label fw-semibold">Timezone</label>
+                    <select class="form-select" id="timezoneSelect">
+                      <option value="UTC">UTC</option>
+                      <option value="America/New_York">Eastern Time</option>
+                      <option value="America/Chicago">Central Time</option>
+                      <option value="America/Denver">Mountain Time</option>
+                      <option value="America/Los_Angeles">Pacific Time</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <hr class="my-4">
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-primary px-4">
+                      <i class="fas fa-save me-2"></i>Save Preferences
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary">
+                      <i class="fas fa-undo me-2"></i>Reset to Default
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="card shadow-sm border-danger mt-5">
+        <div class="card-header bg-danger bg-opacity-10 border-danger">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+            <h5 class="card-title mb-0 fw-bold text-danger">Danger Zone</h5>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h6 class="fw-bold">Delete Account</h6>
+              <p class="text-muted mb-0">Permanently delete your account and all associated data. This action cannot be undone.</p>
+            </div>
+            <div class="col-md-4 text-end">
+              <button type="button" class="btn btn-outline-danger" onclick="confirmAccountDeletion()">
+                <i class="fas fa-trash me-2"></i>Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+// Password visibility toggle
+function togglePasswordVisibility(fieldId, button) {
+  const field = document.getElementById(fieldId);
+  const icon = button.querySelector('i');
+
+  if (field.type === 'password') {
+    field.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    field.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+// Password strength checker (reused from registration)
+function getPasswordStrength(password) {
+  let score = 0;
+  let requirements = [];
+  let met = [];
+
+  if (password.length >= 8) {
+    score += 1;
+    met.push('8+ characters');
+  } else {
+    requirements.push('8+ characters');
+  }
+
+  if (/[a-z]/.test(password)) {
+    score += 1;
+    met.push('lowercase');
+  } else {
+    requirements.push('lowercase letter');
+  }
+
+  if (/[A-Z]/.test(password)) {
+    score += 1;
+    met.push('uppercase');
+  } else {
+    requirements.push('uppercase letter');
+  }
+
+  if (/[0-9]/.test(password)) {
+    score += 1;
+    met.push('number');
+  } else {
+    requirements.push('number');
+  }
+
+  if (/[^A-Za-z0-9]/.test(password)) {
+    score += 1;
+    met.push('special character');
+  } else {
+    requirements.push('special character');
+  }
+
+  return { score, requirements, met };
+}
+
+function updatePasswordStrength(password) {
+  const container = document.querySelector('.password-strength-container');
+  const fill = document.getElementById('newPasswordStrengthFill');
+  const text = document.getElementById('newPasswordStrengthText');
+  const requirements = document.getElementById('newPasswordStrengthRequirements');
+
+  if (!password) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+  const { score, requirements: missing } = getPasswordStrength(password);
+
+  const percentage = (score / 5) * 100;
+  fill.style.width = percentage + '%';
+
+  let strengthText, strengthColor;
+
+  if (score <= 2) {
+    strengthText = 'Weak';
+    strengthColor = '#dc3545';
+  } else if (score <= 3) {
+    strengthText = 'Medium';
+    strengthColor = '#fd7e14';
+  } else if (score === 4) {
+    strengthText = 'Strong';
+    strengthColor = '#ffc107';
+  } else {
+    strengthText = 'Excellent';
+    strengthColor = '#198754';
+  }
+
+  fill.style.backgroundColor = strengthColor;
+  text.textContent = strengthText;
+  text.style.color = strengthColor;
+  text.style.fontWeight = '600';
+
+  if (missing.length > 0) {
+    requirements.textContent = `Missing: ${missing.join(', ')}`;
+    requirements.style.color = '#6c757d';
+  } else {
+    requirements.textContent = '✓ All requirements met';
+    requirements.style.color = '#198754';
+  }
+}
+
+function checkNewPasswordMatch() {
+  const password1 = document.getElementById('{{ p_form.new_password1.id_for_label }}');
+  const password2 = document.getElementById('{{ p_form.new_password2.id_for_label }}');
+  const container = document.querySelector('.password-match-container');
+  const text = document.getElementById('newPasswordMatchText');
+
+  if (!password2.value) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+
+  if (password1.value === password2.value) {
+    text.textContent = '✓ Passwords match';
+    text.style.color = '#198754';
+    password2.classList.remove('is-invalid');
+    password2.classList.add('is-valid');
+  } else {
+    text.textContent = '✗ Passwords do not match';
+    text.style.color = '#dc3545';
+    password2.classList.remove('is-valid');
+    password2.classList.add('is-invalid');
+  }
+}
+
+// Form reset function
+function resetForm(formId) {
+  const form = document.getElementById(formId);
+  if (form) {
+    form.reset();
+    // Reset password strength indicators
+    if (formId === 'passwordForm') {
+      document.querySelector('.password-strength-container').style.display = 'none';
+      document.querySelector('.password-match-container').style.display = 'none';
+    }
+  }
+}
+
+// Account deletion confirmation
+function confirmAccountDeletion() {
+  Swal.fire({
+    title: 'Delete Account?',
+    text: 'This action cannot be undone. All your data will be permanently deleted.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc3545',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Yes, delete my account',
+    cancelButtonText: 'Cancel',
+    focusCancel: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: 'Account Deleted',
+        text: 'Your account has been scheduled for deletion.',
+        icon: 'success',
+        confirmButtonColor: '#dc3545'
+      });
+    }
+  });
+}
+
+// Form submission handlers
+document.addEventListener('DOMContentLoaded', function() {
+  const usernameForm = document.getElementById('usernameForm');
+  const passwordForm = document.getElementById('passwordForm');
+  const newPassword1 = document.getElementById('{{ p_form.new_password1.id_for_label }}');
+  const newPassword2 = document.getElementById('{{ p_form.new_password2.id_for_label }}');
+
+  // Password strength checking
+  if (newPassword1) {
+    newPassword1.addEventListener('input', function() {
+      updatePasswordStrength(this.value);
+      if (newPassword2.value) {
+        checkNewPasswordMatch();
+      }
+    });
+  }
+
+  if (newPassword2) {
+    newPassword2.addEventListener('input', checkNewPasswordMatch);
+  }
+
+  // Username form submission
+  if (usernameForm) {
+    usernameForm.addEventListener('submit', function(e) {
+      const btn = document.getElementById('saveUsernameBtn');
+      const text = document.getElementById('usernameText');
+      const spinner = document.getElementById('usernameSpinner');
+
+      text.classList.add('d-none');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+    });
+  }
+
+  // Password form submission
+  if (passwordForm) {
+    passwordForm.addEventListener('submit', function(e) {
+      const btn = document.getElementById('changePasswordBtn');
+      const text = document.getElementById('passwordText');
+      const spinner = document.getElementById('passwordSpinner');
+
+      // Check password strength
+      if (newPassword1) {
+        const { score } = getPasswordStrength(newPassword1.value);
+        if (score < 3) {
+          e.preventDefault();
+          Swal.fire({
+            icon: 'warning',
+            title: 'Weak Password',
+            text: 'Please choose a stronger password for better security.',
+            confirmButtonColor: '#0d6efd'
+          });
+          return;
+        }
+      }
+
+      // Check password match
+      if (newPassword1.value !== newPassword2.value) {
+        e.preventDefault();
+        Swal.fire({
+          icon: 'error',
+          title: 'Password Mismatch',
+          text: 'New passwords do not match. Please check and try again.',
+          confirmButtonColor: '#0d6efd'
+        });
+        return;
+      }
+
+      text.classList.add('d-none');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+    });
+  }
+});
+</script>
+
+<!-- Custom CSS -->
+<style>
+  body {
+    background-color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .settings-nav .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .settings-nav .nav-link:hover,
+  .settings-nav .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  .settings-nav .nav-link i {
+    font-size: 1.1rem;
+  }
+
+  .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+  }
+
+  .settings-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-avatar-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    background-color: #f1f3f5;
+    border-radius: 50%;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+  }
+
+  .profile-avatar-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    transform: translate(25%, 25%);
+  }
+
+  .password-strength-bar {
+    width: 100%;
+    height: 6px;
+    background-color: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .password-strength-fill {
+    height: 100%;
+    width: 0;
+    background-color: #198754;
+    transition: width 0.3s ease;
+  }
+
+  .password-strength-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .password-strength-requirements {
+    font-size: 0.75rem;
+    color: #6c757d;
+  }
+
+  .password-match-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+</style>
+
+{% endblock %}

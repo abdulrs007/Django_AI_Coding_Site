@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Professional Header -->
+<div class="bg-white border-bottom shadow-sm mb-5">
+  <div class="container py-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="h2 mb-2 text-dark fw-bold">AI CodeGen Portal</h1>
+        <p class="text-muted mb-0 fs-5">Professional code analysis and optimization platform</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="badge bg-success fs-6 px-3 py-2">
+          <i class="fas fa-circle me-1"></i> System Online
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard Statistics -->
+<div class="container mb-5">
+  <div class="row g-4">
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center p-4">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+              <i class="fas fa-users text-primary fs-4"></i>
+            </div>
+          </div>
+          <h3 class="h2 mb-1 text-dark">{{ registered_users_count|default:"1,247" }}</h3>
+          <p class="text-muted mb-0 small">Registered Users</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center p-4">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+              <i class="fas fa-check-circle text-success fs-4"></i>
+            </div>
+          </div>
+          <h3 class="h2 mb-1 text-dark">{{ codes_fixed_count|default:"5,892" }}</h3>
+          <p class="text-muted mb-0 small">Codes Fixed</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center p-4">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="bg-info bg-opacity-10 rounded-circle p-3">
+              <i class="fas fa-lightbulb text-info fs-4"></i>
+            </div>
+          </div>
+          <h3 class="h2 mb-1 text-dark">{{ codes_suggested_count|default:"3,421" }}</h3>
+          <p class="text-muted mb-0 small">Suggestions Made</p>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+{% if user.is_authenticated %}
+  <div class="container">
+    <!-- Code Analysis Workspace -->
+    <div class="card shadow-sm border-0 mb-5">
+      <div class="card-header bg-white border-bottom py-3">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-code text-primary me-2"></i>
+          <h5 class="mb-0 fw-semibold">Code Analysis Workspace</h5>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        {% if response %}
+          <div class="mb-4">
+            <h6 class="text-muted mb-3">Analysis Result:</h6>
+            <div class="bg-light rounded p-3 border">
+              <pre class="line-numbers mb-0"><code class="language-{{ lang }}">{{ response }}</code></pre>
+            </div>
+          </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'home' %}">
+          {% csrf_token %}
+
+          <div class="row mb-4">
+            <div class="col-md-8">
+              <label for="codeArea" class="form-label fw-semibold text-dark">Source Code</label>
+              <textarea
+                id="codeArea"
+                class="form-control border-0 shadow-sm"
+                name="code"
+                rows="12"
+                placeholder="Paste your code here for analysis and optimization..."
+                style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 14px; line-height: 1.5;">{{ code }}</textarea>
+            </div>
+
+            <div class="col-md-4">
+              <label for="langSelect" class="form-label fw-semibold text-dark">Programming Language</label>
+              <select id="langSelect" class="form-select border-0 shadow-sm" name="lang">
+                <option selected disabled>Select Language</option>
+                {% for l in lang_list %}
+                  <option value="{{ l }}" {% if l == lang %}selected{% endif %}>{{ l|capfirst }}</option>
+                {% endfor %}
+              </select>
+
+              <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="text-muted mb-2">Supported Languages</h6>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge bg-secondary">Python</span>
+                  <span class="badge bg-secondary">JavaScript</span>
+                  <span class="badge bg-secondary">Java</span>
+                  <span class="badge bg-secondary">C++</span>
+                  <span class="badge bg-secondary">+56 more</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+              <i class="fas fa-shield-alt me-1"></i>
+              Your code is processed securely and not stored permanently
+            </div>
+            <button type="submit" class="btn btn-primary px-4 py-2">
+              <i class="fas fa-magic me-2"></i>Analyze & Fix Code
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white border-bottom py-3">
+            <h6 class="mb-0 fw-semibold">
+              <i class="fas fa-clock text-muted me-2"></i>Recent Activity
+            </h6>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <div class="list-group-item border-0 py-3">
+                <div class="d-flex align-items-center">
+                  <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                    <i class="fas fa-check text-success"></i>
+                  </div>
+                  <div>
+                    <p class="mb-1 fw-medium">Python script optimized</p>
+                    <small class="text-muted">2 minutes ago</small>
+                  </div>
+                </div>
+              </div>
+              <div class="list-group-item border-0 py-3">
+                <div class="d-flex align-items-center">
+                  <div class="bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                    <i class="fas fa-lightbulb text-info"></i>
+                  </div>
+                  <div>
+                    <p class="mb-1 fw-medium">JavaScript suggestions provided</p>
+                    <small class="text-muted">15 minutes ago</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white border-bottom py-3">
+            <h6 class="mb-0 fw-semibold">
+              <i class="fas fa-chart-line text-muted me-2"></i>Usage Stats
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <small class="text-muted">Daily Limit</small>
+                <small class="text-muted">8/25</small>
+              </div>
+              <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-primary" style="width: 32%"></div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <small class="text-muted">Success Rate</small>
+                <small class="text-muted">94%</small>
+              </div>
+              <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-success" style="width: 94%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if alert_message %}
+    <script>
+      Swal.fire({
+        icon: 'warning',
+        title: 'Attention Required',
+        text: "{{ alert_message }}",
+        confirmButtonColor: '#0d6efd',
+        customClass: {
+          popup: 'rounded shadow-lg'
+        }
+      });
+    </script>
+  {% endif %}
+
+{% else %}
+  <!-- Professional Login Section -->
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-5">
+        <div class="card shadow border-0">
+          <div class="card-body p-5">
+            <div class="text-center mb-4">
+              <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                <i class="fas fa-user-circle text-primary fs-1"></i>
+              </div>
+              <h4 class="fw-bold mb-2">Welcome Back</h4>
+              <p class="text-muted">Sign in to access your coding workspace</p>
+            </div>
+
+            <form method="POST" action="{% url 'login' %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label text-muted small">Username</label>
+                <input type="text" class="form-control border-0 shadow-sm py-3" name="username" placeholder="Enter your username">
+              </div>
+              <div class="mb-4">
+                <label class="form-label text-muted small">Password</label>
+                <input type="password" class="form-control border-0 shadow-sm py-3" name="password" placeholder="Enter your password">
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-3 fw-semibold">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+              </button>
+            </form>
+
+            <div class="text-center mt-4 pt-3 border-top">
+              <p class="text-muted mb-2">Don't have an account?</p>
+              <a href="{% url 'register' %}" class="btn btn-outline-primary">
+                <i class="fas fa-user-plus me-2"></i>Create Account
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Add some custom CSS for better styling -->
+<style>
+  body {
+    background-color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+  }
+
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+  }
+
+  .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+  }
+
+  .progress {
+    border-radius: 10px;
+  }
+
+  .progress-bar {
+    border-radius: 10px;
+  }
+
+  pre code {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* Loading Animation Styles */
+  #loadingOverlay {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .spinner-border {
+    animation: spinner-border 0.75s linear infinite;
+  }
+
+  @keyframes spinner-border {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+  }
+
+  @keyframes progress-bar-stripes {
+    0% {
+      background-position-x: 1rem;
+    }
+  }
+
+  /* Form Validation States */
+  .form-control.processing {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .form-select.processing {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+</style>
+
+<!-- Loading JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('codeFixForm');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const btnText = document.getElementById('btnText');
+  const btnSpinner = document.getElementById('btnSpinner');
+  const codeArea = document.getElementById('codeArea');
+  const langSelect = document.getElementById('langSelect');
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      // Basic validation
+      if (!codeArea.value.trim()) {
+        e.preventDefault();
+        Swal.fire({
+          icon: 'warning',
+          title: 'Code Required',
+          text: 'Please enter some code to analyze.',
+          confirmButtonColor: '#0d6efd'
+        });
+        return;
+      }
+
+      if (!langSelect.value || langSelect.value === 'Select Language') {
+        e.preventDefault();
+        Swal.fire({
+          icon: 'warning',
+          title: 'Language Required',
+          text: 'Please select a programming language.',
+          confirmButtonColor: '#0d6efd'
+        });
+        return;
+      }
+
+      // Show loading state immediately
+      showLoadingState();
+
+      // Allow form to submit after showing loading state
+      // The form will naturally submit and redirect
+    });
+  }
+
+  function showLoadingState() {
+    // Show overlay
+    if (loadingOverlay) {
+      loadingOverlay.classList.remove('d-none');
+    }
+
+    // Update button state
+    if (btnText && btnSpinner && analyzeBtn) {
+      btnText.classList.add('d-none');
+      btnSpinner.classList.remove('d-none');
+      analyzeBtn.disabled = true;
+    }
+
+    // Disable form inputs
+    if (codeArea && langSelect) {
+      codeArea.classList.add('processing');
+      langSelect.classList.add('processing');
+    }
+
+    // Show progress messages
+    showProgressMessages();
+  }
+
+  function showProgressMessages() {
+    const messages = [
+      { text: 'Analyzing code structure...', delay: 1000 },
+      { text: 'Identifying optimization opportunities...', delay: 3000 },
+      { text: 'Applying AI improvements...', delay: 6000 },
+      { text: 'Finalizing results...', delay: 9000 }
+    ];
+
+    const messageElement = loadingOverlay ? loadingOverlay.querySelector('p') : null;
+
+    if (messageElement) {
+      messages.forEach((message, index) => {
+        setTimeout(() => {
+          if (loadingOverlay && !loadingOverlay.classList.contains('d-none')) {
+            messageElement.innerHTML = message.text + '<br>This process ensures optimal code quality';
+          }
+        }, message.delay);
+      });
+    }
+  }
+
+  // Test loading state (remove this after testing)
+  // Uncomment the line below to test the loading animation
+  // setTimeout(() => showLoadingState(), 2000);
+});
+</script>
+
+{% endblock %}

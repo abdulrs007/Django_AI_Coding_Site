@@ -1,0 +1,57 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI_Codegen</title>
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="…"
+    crossorigin="anonymous"
+  >
+
+  <!-- Prism & your CSS -->
+  <link href="{% static 'css/prism.css' %}" rel="stylesheet">
+
+  <!-- SweetAlert2 (load early so it’s ready) -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  {% include "navbar.html" %}
+
+  <div class="container">
+    <br>
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- Your other scripts -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+    integrity="…"
+    crossorigin="anonymous"
+  ></script>
+  <script src="{% static 'js/prism.js' %}"></script>
+
+  {# —————— FLASH MESSAGES via SweetAlert2 —————— #}
+  {% if messages %}
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        {% for message in messages %}
+          Swal.fire({
+            icon: "{{ message.tags }}",       // "success", "error", etc.
+            title: "{{ message|escapejs }}",  // your message text
+            confirmButtonColor: '#28a745'
+          });
+        {% endfor %}
+      });
+    </script>
+  {% endif %}
+
+</body>
+</html>

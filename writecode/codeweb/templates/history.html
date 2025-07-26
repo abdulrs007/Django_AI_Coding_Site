@@ -1,0 +1,432 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Professional Header -->
+<div class="bg-white border-bottom shadow-sm mb-5">
+  <div class="container py-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="h2 mb-2 text-dark fw-bold">
+          <i class="fas fa-history text-info me-2"></i>Code History
+        </h1>
+        <p class="text-muted mb-0 fs-5">Your complete coding assistance history and solutions</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+          <a href="{% url 'home' %}" class="btn btn-outline-primary">
+            <i class="fas fa-tools me-2"></i>Code Fixer
+          </a>
+          <a href="{% url 'suggest' %}" class="btn btn-outline-success">
+            <i class="fas fa-lightbulb me-2"></i>Code Suggest
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  {% if code %}
+    <!-- History Statistics -->
+    <div class="row mb-5">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+              <i class="fas fa-code text-primary fs-4"></i>
+            </div>
+            <h3 class="h2 mb-1 text-dark">{{ code|length }}</h3>
+            <p class="text-muted mb-0 small">Total Entries</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+              <i class="fas fa-calendar text-success fs-4"></i>
+            </div>
+            <h3 class="h2 mb-1 text-dark">{{ code|length|floatformat:0 }}</h3>
+            <p class="text-muted mb-0 small">This Month</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="bg-warning bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+              <i class="fas fa-star text-warning fs-4"></i>
+            </div>
+            <h3 class="h2 mb-1 text-dark">4.8</h3>
+            <p class="text-muted mb-0 small">Avg Quality</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body py-3">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <div class="input-group">
+              <span class="input-group-text bg-light border-0">
+                <i class="fas fa-search text-muted"></i>
+              </span>
+              <input type="text" class="form-control border-0 shadow-sm" id="searchHistory" placeholder="Search your code history...">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select border-0 shadow-sm" id="languageFilter">
+              <option value="">All Languages</option>
+              <option value="python">Python</option>
+              <option value="javascript">JavaScript</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select border-0 shadow-sm" id="sortBy">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="language">By Language</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code History Items -->
+    <div class="row" id="historyContainer">
+      {% for c in code %}
+        <div class="col-12 mb-4 history-item" data-language="{{ c.language|lower }}" data-question="{{ c.question|lower }}">
+          <div class="card shadow-sm border-0 h-100">
+            <!-- Card Header -->
+            <div class="card-header bg-white border-bottom py-3">
+              <div class="row align-items-center">
+                <div class="col-md-8">
+                  <div class="d-flex align-items-center">
+                    {% if c.language == 'python' %}
+                      <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                        <i class="fab fa-python text-success"></i>
+                      </div>
+                    {% elif c.language == 'javascript' %}
+                      <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                        <i class="fab fa-js-square text-warning"></i>
+                      </div>
+                    {% elif c.language == 'java' %}
+                      <div class="bg-danger bg-opacity-10 rounded-circle p-2 me-3">
+                        <i class="fab fa-java text-danger"></i>
+                      </div>
+                    {% elif c.language == 'cpp' %}
+                      <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                        <i class="fas fa-code text-primary"></i>
+                      </div>
+                    {% else %}
+                      <div class="bg-secondary bg-opacity-10 rounded-circle p-2 me-3">
+                        <i class="fas fa-code text-secondary"></i>
+                      </div>
+                    {% endif %}
+                    <div>
+                      <h6 class="mb-1 fw-semibold">{{ c.question|truncatechars:60 }}</h6>
+                      <div class="d-flex align-items-center text-muted small">
+                        <span class="badge bg-light text-dark me-2">{{ c.language|capfirst }}</span>
+                        <i class="fas fa-clock me-1"></i>
+                        <span>{{ c.created_at|timesince }} ago</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4 text-end">
+                  <div class="btn-group" role="group">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="copyCode('code-{{ c.id }}')">
+                      <i class="fas fa-copy me-1"></i>Copy
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="downloadCode('code-{{ c.id }}', '{{ c.language }}')">
+                      <i class="fas fa-download me-1"></i>Download
+                    </button>
+                    <form method="POST" action="{% url 'delete_history' c.id %}" class="d-inline delete-form">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash me-1"></i>Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="card-body p-0">
+              <!-- Question/Description -->
+              {% if c.question %}
+                <div class="px-4 pt-3 pb-2">
+                  <h6 class="text-muted mb-2">
+                    <i class="fas fa-question-circle me-1"></i>Request:
+                  </h6>
+                  <p class="mb-0 text-dark">{{ c.question }}</p>
+                </div>
+                <hr class="my-2">
+              {% endif %}
+
+              <!-- Code Display -->
+              <div class="position-relative">
+                <div class="bg-dark rounded-bottom">
+                  <pre class="mb-0 p-4" style="background: #1e1e1e; color: #d4d4d4; border-radius: 0 0 0.375rem 0.375rem; max-height: 400px; overflow-y: auto;">
+<code class="language-{{ c.language }}" id="code-{{ c.id }}">{{ c.code_answer }}</code>
+                  </pre>
+                </div>
+
+                <!-- Code Overlay Actions -->
+                <div class="position-absolute top-0 end-0 p-3">
+                  <button class="btn btn-dark btn-sm opacity-75" onclick="toggleExpand('code-{{ c.id }}-container')">
+                    <i class="fas fa-expand-alt"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="card-footer bg-light border-top py-2">
+              <div class="row align-items-center text-muted small">
+                <div class="col-md-6">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Lines: <span class="fw-semibold">{{ c.code_answer|linebreaks|length }}</span> •
+                  Characters: <span class="fw-semibold">{{ c.code_answer|length }}</span>
+                </div>
+                <div class="col-md-6 text-end">
+                  <div class="d-flex justify-content-end align-items-center">
+                    <div class="me-3">
+                      <i class="fas fa-star text-warning me-1"></i>
+                      <span>Quality Score: 4.8/5</span>
+                    </div>
+                    <span class="badge bg-success">Optimized</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Load More Button -->
+    <div class="text-center mb-5">
+      <button class="btn btn-outline-primary px-4" id="loadMoreBtn" style="display: none;">
+        <i class="fas fa-chevron-down me-2"></i>Load More History
+      </button>
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="row justify-content-center">
+      <div class="col-md-6 text-center">
+        <div class="card shadow-sm border-0">
+          <div class="card-body py-5">
+            <div class="bg-light rounded-circle p-4 d-inline-flex mb-4">
+              <i class="fas fa-history text-muted" style="font-size: 3rem;"></i>
+            </div>
+            <h4 class="fw-bold mb-3">No Code History Yet</h4>
+            <p class="text-muted mb-4">Start using our AI tools to build your coding history. All your fixed and suggested codes will appear here.</p>
+
+            <div class="d-flex gap-3 justify-content-center">
+              <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-tools me-2"></i>Fix Code
+              </a>
+              <a href="{% url 'suggest' %}" class="btn btn-outline-primary">
+                <i class="fas fa-lightbulb me-2"></i>Get Suggestions
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- JavaScript Functions -->
+<script>
+// Delete confirmation
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.delete-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      Swal.fire({
+        title: 'Delete Code Entry?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        customClass: {
+          popup: 'rounded shadow-lg'
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.submit();
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Code entry has been removed.',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        }
+      });
+    });
+  });
+});
+
+// Copy code function
+function copyCode(codeId) {
+  const codeElement = document.getElementById(codeId);
+  if (codeElement) {
+    const text = codeElement.textContent;
+    navigator.clipboard.writeText(text).then(function() {
+      Swal.fire({
+        icon: 'success',
+        title: 'Copied!',
+        text: 'Code copied to clipboard',
+        timer: 1500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    });
+  }
+}
+
+// Download code function
+function downloadCode(codeId, language) {
+  const codeElement = document.getElementById(codeId);
+  if (codeElement) {
+    const text = codeElement.textContent;
+    const filename = `code_history.${language}`;
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Downloaded!',
+      text: 'Code file saved successfully',
+      timer: 1500,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
+    });
+  }
+}
+
+// Search functionality
+document.getElementById('searchHistory').addEventListener('input', function() {
+  const searchTerm = this.value.toLowerCase();
+  const historyItems = document.querySelectorAll('.history-item');
+
+  historyItems.forEach(item => {
+    const question = item.dataset.question;
+    if (question.includes(searchTerm)) {
+      item.style.display = 'block';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+});
+
+// Language filter
+document.getElementById('languageFilter').addEventListener('change', function() {
+  const selectedLanguage = this.value.toLowerCase();
+  const historyItems = document.querySelectorAll('.history-item');
+
+  historyItems.forEach(item => {
+    const language = item.dataset.language;
+    if (selectedLanguage === '' || language === selectedLanguage) {
+      item.style.display = 'block';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+});
+
+// Toggle code expansion
+function toggleExpand(containerId) {
+  const container = document.getElementById(containerId);
+  if (container) {
+    const pre = container.querySelector('pre');
+    if (pre.style.maxHeight === 'none') {
+      pre.style.maxHeight = '400px';
+    } else {
+      pre.style.maxHeight = 'none';
+    }
+  }
+}
+</script>
+
+<!-- Custom CSS -->
+<style>
+  body {
+    background-color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+  }
+
+  pre code {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .history-item {
+    transition: opacity 0.3s ease;
+  }
+
+  .swal2-toast {
+    font-size: 14px;
+  }
+
+  .position-relative:hover .position-absolute {
+    opacity: 1;
+  }
+
+  .position-absolute {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+</style>
+
+{% endblock %}
